@@ -1,0 +1,237 @@
+using System;
+using System.Collections.Generic;
+using MySql.Data.MySqlClient;
+
+class Program
+{
+    static string connectionString = "server=localhost;port=4444;database=Holi;user=root;password=root";
+
+    static void Main()
+    {
+        Console.WriteLine("Prueba BackEnd Solo inquilino");
+
+        bool salir = false;
+        while (!salir)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Elije una opcion:");
+            Console.WriteLine("1. Crear inquilino");
+            Console.WriteLine("2. Leer inquilinos");
+            Console.WriteLine("3. Actualizar inquilino");
+            Console.WriteLine("4. Eliminar inquilino");
+            Console.WriteLine("5. Salir");
+
+            string opcion = Console.ReadLine();
+
+            switch (opcion)
+            {
+                case "1":
+                    CrearInquilino();
+                    break;
+                case "2":
+                    LeerInquilinos();
+                    break;
+                case "3":
+                    ActualizarInquilino();
+                    break;
+                case "4":
+                    EliminarInquilino();
+                    break;
+                case "5":
+                    salir = true;
+                    break;
+                default:
+                    Console.WriteLine("Opción no válida. Por favor, seleccione una opción válida.");
+                    break;
+            }
+        }
+    }
+//clase
+    static void CrearInquilino()
+    {
+        Console.WriteLine("Creación de nuevo inquilino");
+        Console.Write("Ingrese el nombre: ");
+        string nombre = Console.ReadLine();
+        Console.Write("Ingrese el email: ");
+        string email = Console.ReadLine();
+        Console.Write("Ingrese el teléfono: ");
+        string telefono = Console.ReadLine();
+        Console.Write("Ingrese el RFC: ");
+        string rfc = Console.ReadLine();
+        Console.Write("Ingrese la razón social: ");
+        string razonSocial = Console.ReadLine();
+        bool esActivo = SolicitarConfirmacion("¿Está activo? (S/N)");
+
+        int id = GenerarNumeroAleatorio(10000, 99999);
+        int codigo = GenerarNumeroAleatorio(10000, 99999);
+//conexion de la base
+        using (MySqlConnection connection = new MySqlConnection(connectionString))
+        {
+            connection.Open();
+//query
+            string query = "INSERT INTO inquilino (id, nombre, email, telefono, rfc, razon_social, es_activo) " +
+                           "VALUES (@id, @nombre, @email, @telefono, @rfc, @razonSocial, @esActivo)";
+
+            MySqlCommand command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id", id);
+            command.Parameters.AddWithValue("@nombre", nombre);
+            command.Parameters.AddWithValue("@email", email);
+            command.Parameters.AddWithValue("@telefono", telefono);
+            command.Parameters.AddWithValue("@rfc", rfc);
+            command.Parameters.AddWithValue("@razonSocial", razonSocial);
+            command.Parameters.AddWithValue("@esActivo", esActivo);
+
+            command.ExecuteNonQuery();//mandarlo a la base de datos
+
+            Console.WriteLine("Inquilino creado exitosamente.");
+        }
+    }
+
+    static void LeerInquilinos()
+    {
+        Console.WriteLine("Lista de inquilinos");
+        Console.WriteLine("-------------------");
+
+        using (MySqlConnection connection = new MySqlConnection(connectionString))
+        {
+            connection.Open();
+//consulta todo lo que hay en la tabla
+            string query = "SELECT * FROM inquilino";
+
+            MySqlCommand command = new MySqlCommand(query, connection);
+
+            using (MySqlDataReader reader = command.ExecuteReader())
+            {
+                while (reader.Read())//modo de lectura listado
+                {
+                    int id = (int)reader["id"]; //valor
+                    string nombre = (string)reader["nombre"];
+                    string email = (string)reader["email"];
+                    string telefono = (string)reader["telefono"];
+                    string rfc = (string)reader["rfc"];
+                    string razonSocial = (string)reader["razon_social"];
+                    bool esActivo = (bool)reader["es_activo"];
+                     //lo acomode en linea
+                    Console.WriteLine($"ID: {id}");
+                    Console.WriteLine($"Nombre: {nombre}");
+                    Console.WriteLine($"Email: {email}");
+                    Console.WriteLine($"Teléfono: {telefono}");
+                    Console.WriteLine($"RFC: {rfc}");
+                    Console.WriteLine($"Razón Social: {razonSocial}");
+                    Console.WriteLine($"Activo: {(esActivo ? "Sí" : "No")}");
+                    Console.WriteLine();
+                }
+            }
+        }
+    }
+
+	//actualizar
+    static void ActualizarInquilino()
+    {
+        Console.WriteLine("Actualización de inquilino");
+        Console.Write("Ingrese el ID del inquilino a actualizar: ");
+        int id = int.Parse(Console.ReadLine());
+
+        // Verificar si el inquilino existe
+        if (!ExisteInquilino(id))
+        {
+            Console.WriteLine("El inquilino no existe.");
+            return; //me regresa
+        }
+
+        Console.WriteLine("Ingrese los nuevos datos:");//pedir los datos
+
+        Console.Write("Nombre: ");
+        string nombre = Console.ReadLine();
+        Console.Write("Email: ");
+        string email = Console.ReadLine();
+        Console.Write("Teléfono: ");
+        string telefono = Console.ReadLine();
+        Console.Write("RFC: ");
+        string rfc = Console.ReadLine();
+        Console.Write("Razón Social: ");
+        string razonSocial = Console.ReadLine();
+        bool esActivo = SolicitarConfirmacion("¿Está activo? (S/N)");
+
+        using (MySqlConnection connection = new MySqlConnection(connectionString))
+        {
+            connection.Open(); //conexion abierta
+
+            string query = "UPDATE inquilino SET nombre = @nombre, email = @email, " +
+                           "telefono = @telefono, rfc = @rfc, razon_social = @razonSocial, " +
+                           "es_activo = @esActivo WHERE id = @id";
+
+            MySqlCommand command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@nombre", nombre);
+            command.Parameters.AddWithValue("@email", email);
+            command.Parameters.AddWithValue("@telefono", telefono);
+            command.Parameters.AddWithValue("@rfc", rfc);
+            command.Parameters.AddWithValue("@razonSocial", razonSocial);
+            command.Parameters.AddWithValue("@esActivo", esActivo);
+            command.Parameters.AddWithValue("@id", id);
+
+            command.ExecuteNonQuery();
+
+            Console.WriteLine("Inquilino actualizado exitosamente.");
+        }
+    }
+
+    static void EliminarInquilino()
+    {
+        Console.WriteLine("Eliminación de inquilino");
+        Console.Write("Ingrese el ID del inquilino a eliminar: ");
+        int id = int.Parse(Console.ReadLine());
+
+        // Verificar si el inquilino existe
+        if (!ExisteInquilino(id))
+        {
+            Console.WriteLine("El inquilino no existe.");
+            return;
+        }
+
+        using (MySqlConnection connection = new MySqlConnection(connectionString))
+        {
+            connection.Open();
+
+            string query = "DELETE FROM inquilino WHERE id = @id";
+
+            MySqlCommand command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id", id);
+
+            command.ExecuteNonQuery();
+
+            Console.WriteLine("Inquilino eliminado exitosamente.");
+        }
+    }
+
+    static bool ExisteInquilino(int id)
+    {
+        using (MySqlConnection connection = new MySqlConnection(connectionString))
+        {
+            connection.Open();
+
+            string query = "SELECT COUNT(*) FROM inquilino WHERE id = @id";
+
+            MySqlCommand command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@id", id);
+
+            int count = Convert.ToInt32(command.ExecuteScalar());
+
+            return count > 0;
+        }
+    }
+//doble confirmacions
+    static bool SolicitarConfirmacion(string mensaje)
+    {
+        Console.Write($"{mensaje} ");
+        string respuesta = Console.ReadLine();
+
+        return respuesta.ToUpper() == "S";
+    }
+//numero aleatorio
+    static int GenerarNumeroAleatorio(int min, int max)
+    {
+        Random random = new Random();
+        return random.Next(min, max + 1);
+    }//cerramos
+}
