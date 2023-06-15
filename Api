@@ -1,0 +1,74 @@
+using System;
+					
+public class Program
+{
+	public static void Main()
+	{
+		
+	}
+}
+
+public class Inquilino
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public string Email { get; set; }
+    public string Telefono { get; set; }
+    public string Rfc { get; set; }
+    public string RazonSocial { get; set; }
+    public bool EsActivo { get; set; }
+}
+
+public class Habitacion
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; }
+    public string Descripcion { get; set; }
+    public int Cantidad { get; set; }
+    public decimal Precio { get; set; }
+    public int Codigo { get; set; }
+    public bool EsActivo { get; set; }
+    public int HostId { get; set; }
+    public int TipoHabitacionId { get; set; }
+}
+
+public class TipoHabitacion
+{
+    public int Codigo { get; set; }
+    public string Nombre { get; set; }
+    public string Descripcion { get; set; }
+    public bool EsActivo { get; set; }
+}
+
+public class DatabaseManager
+{
+    private string connectionString;
+
+    public DatabaseManager(string connectionString)
+    {
+        this.connectionString = connectionString;
+    }
+
+    public void CrearInquilino(Inquilino inquilino)
+    {
+      
+		using (SqlConnection connection = new SqlConnection(connectionString))
+    {
+        string query = "INSERT INTO inquilino (nombre, email, telefono, rfc, razon_social, es_activo) VALUES (@nombre, @email, @telefono, @rfc, @razon_social, @es_activo)";
+        SqlCommand command = new SqlCommand(query, connection);
+
+        command.Parameters.AddWithValue("@nombre", inquilino.Nombre);
+        command.Parameters.AddWithValue("@email", inquilino.Email);
+        command.Parameters.AddWithValue("@telefono", inquilino.Telefono);
+        command.Parameters.AddWithValue("@rfc", inquilino.RFC);
+        command.Parameters.AddWithValue("@razon_social", inquilino.RazonSocial);
+        command.Parameters.AddWithValue("@es_activo", inquilino.EsActivo);
+
+        connection.Open();
+        command.ExecuteNonQuery();
+    }
+		
+		
+    }
+}
+
