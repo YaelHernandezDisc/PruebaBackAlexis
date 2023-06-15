@@ -1,0 +1,41 @@
+CREATE DATABASE Holi;
+
+USE Holi;
+
+
+CREATE TABLE inquilino (
+    id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    rfc VARCHAR(20) NOT NULL,
+    razon_social VARCHAR(100) NOT NULL,
+    es_activo BOOLEAN NOT NULL,
+    PRIMARY KEY (id)
+);
+
+
+CREATE TABLE habitacion (
+    id INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(200) NOT NULL,
+    cantidad INT NOT NULL,
+    precio DECIMAL(10, 2) NOT NULL,
+    codigo INT NOT NULL,
+    es_activo BOOLEAN NOT NULL,
+    host_id INT NOT NULL,
+    tipo_habitacion_id INT NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (host_id) REFERENCES inquilino(id),
+    FOREIGN KEY (tipo_habitacion_id) REFERENCES tipo_habitaciones(id)
+);
+
+
+CREATE TABLE tipo_habitaciones (
+    id INT NOT NULL,
+    codigo VARCHAR(10) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(200) NOT NULL,
+    es_activo BOOLEAN NOT NULL,
+    PRIMARY KEY (id)
+);
