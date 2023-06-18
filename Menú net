@@ -1,0 +1,198 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using MySql.Data.MySqlClient;
+
+namespace YourNamespace
+{
+    [ApiController]
+    [Route("[controller]")]
+    public class InquilinoController : ControllerBase
+    {
+        private static readonly string connectionString = "server=localhost;port=4444;database=Holi;user=root;password=root";
+
+        [HttpGet]
+        public IActionResult Index()
+        {
+            return Ok("Prueba BackEnd Solo inquilino");
+        }
+
+        [HttpPost("Crear")]
+        public IActionResult CrearInquilino([FromBody] Inquilino inquilino)
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = "INSERT INTO inquilino (id, nombre, email, telefono, rfc, razon_social, es_activo) " +
+                                   "VALUES (@id, @nombre, @email, @telefono, @rfc, @razonSocial, @esActivo)";
+
+                    MySqlCommand command = new MySqlCommand(query, connection);
+                    command.Parameters.AddWithValue("@id", inquilino.Id);
+                    command.Parameters.AddWithValue("@nombre", inquilino.Nombre);
+                    command.Parameters.AddWithValue("@email", inquilino.Email);
+                    command.Parameters.AddWithValue("@telefono", inquilino.Telefono);
+                    command.Parameters.AddWithValue("@rfc", inquilino.RFC);
+                    command.Parameters.AddWithValue("@razonSocial", inquilino.RazonSocial);
+                    command.Parameters.AddWithValue("@esActivo", inquilino.EsActivo);
+
+                    command.ExecuteNonQuery();
+
+                    return Ok("Inquilino creado exitosamente.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al crear inquilino: {ex.Message}");
+            }
+        }
+
+        [HttpGet("Leer")]
+        public IActionResult LeerInquilinos()
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = "SELECT * FROM inquilino";
+
+                    MySqlCommand command = new MySqlCommand(query, connection);
+
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        List<Inquilino> inquilinos = new List<Inquilino>();
+
+                        while (reader.Read())
+                        {
+                            Inquilino inquilino = new Inquilino
+                            {
+                                Id = (int)reader["id"],
+                                Nombre = (string)reader["nombre"],
+                                Email = (string)reader["email"],
+                                Telefono = (string)reader["telefono"],
+                                RFC = (string)reader["rfc"],
+                                RazonSocial = (string)reader["razon_social"],
+                                EsActivo = (bool)reader["es_activo"]
+                            };
+
+                            inquilinos.Add(inquilino);
+                        }
+
+                        return Ok(inquilinos);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al leer inquilinos: {ex.Message}");
+            }
+        }
+
+        [HttpPost("Actualizar")]
+        public IActionResult ActualizarInquilino([FromBody] Inquilino inquilino)
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = "UPDATE inquilino SET nombre = @nombre, email = @email, " +
+                                   "telefono = @telefono, rfc = @rfc, razon_social = @razonSocial, " +
+                                   "es_activo = @esActivo WHERE id = @id";
+
+                    MySqlCommand command = new MySqlCommand(query, connection);
+                    command.Parameters.AddWithValue("@nombre", inquilino.Nombre);
+                    command.Parameters.AddWithValue("@email", inquilino.Email);
+                    command.Parameters.AddWithValue("@telefono", inquilino.Telefono);
+                    command.Parameters.AddWithValue("@rfc", inquilino.RFC);
+                    command.Parameters.AddWithValue("@razonSocial", inquilino.RazonSocial);
+                    command.Parameters.AddWithValue("@esActivo", inquilino.EsActivo);
+                    command.Parameters.AddWithValue("@id", inquilino.Id);
+
+                    command.ExecuteNonQuery();
+
+                    return Ok("Inquilino actualizado exitosamente.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al actualizar inquilino: {ex.Message}");
+            }
+        }
+
+        [HttpPost("Eliminar")]
+        public IActionResult EliminarInquilino([FromBody] int id)
+        {
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = "DELETE FROM inquilino WHERE id = @id";
+
+                    MySqlCommand command = new MySqlCommand(query, connection);
+                    command.Parameters.AddWithValue("@id", id);
+
+                    command.ExecuteNonQuery();
+
+                    return Ok("Inquilino eliminado exitosamente.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al eliminar inquilino: {ex.Message}");
+            }
+        }
+
+        private bool ExisteInquilino(int id)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string query = "SELECT COUNT(*) FROM inquilino WHERE id = @id";
+
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.Parameters.AddWithValue("@id", id);
+
+                int count = Convert.ToInt32(command.ExecuteScalar());
+
+                return count > 0;
+            }
+        }
+
+        private bool SolicitarConfirmacion(string mensaje)
+        {
+            Console.Write($"{mensaje} ");
+            string respuesta = Console.ReadLine();
+
+            return respuesta.ToUpper() == "S";
+        }
+
+        private int GenerarNumeroAleatorio(int min, int max)
+        {
+            Random random = new Random();
+            return random.Next(min, max + 1);
+        }
+    }
+
+    public class Inquilino
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+        public string Email { get; set; }
+        public string Telefono { get; set; }
+        public string RFC { get; set; }
+        public string RazonSocial { get; set; }
+        public bool EsActivo { get; set; }
+    }
+}
